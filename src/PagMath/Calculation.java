@@ -22,9 +22,7 @@ public class Calculation {
     }
 
     public static List<String> generalCalc(List<String> input) {
-        System.out.println("Input: " + input);
         List<String> result = new ArrayList<>(input);
-        System.out.println("Input:" + result);
 
         //ConvertsFirstNumber to one
         handelStartingMinus(result);
@@ -103,9 +101,8 @@ public class Calculation {
 
             System.out.println("Temp: " + temp.toString());
 
-            // Entferne alle Teile der Zahl, einschließlich des Minuszeichens und der folgenden Zahlen
             for (int j = 0; j < i; j++) {
-                result.remove(0);  // Entferne immer das erste Element, da sich die Liste verschiebt
+                result.remove(0);
             }
 
             result.add(0, temp.toString());
@@ -239,8 +236,12 @@ public class Calculation {
         handleMissingOperationSymbols(tokens);
 
         //ConvertComplexOperations
-        ComplexOperations.handleFunctions(tokens);
-        System.out.println("ComplexOperations:" + tokens);
+        List<String> functionName = tokens.stream().filter(ComplexOperations::isFunction).toList();
+        if (!functionName.isEmpty()) {
+            ComplexOperations.handleCommonUsedFunctions(tokens);
+            ComplexOperations.handleFunctions(tokens);
+            System.out.println("Complex Operation "+ functionName.get(0) + ": " + tokens);
+        }
 
         List<String> result = processTokens(tokens);
         System.out.println("Result: " +expression + " "+ result.get(0));

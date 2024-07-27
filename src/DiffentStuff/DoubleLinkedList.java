@@ -1,4 +1,4 @@
-import jdk.jfr.Label;
+package DiffentStuff;
 
 import java.util.*;
 
