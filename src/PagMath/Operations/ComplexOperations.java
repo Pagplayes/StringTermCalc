@@ -26,10 +26,13 @@ public class ComplexOperations {
                         List<String> subTokens = tokens.subList(openingIndex + 1, closingIndex);
 
                         List<String> evaluatedSubTokens = processTokens(subTokens);
-
                         double argument = Double.parseDouble(evaluatedSubTokens.get(0));
                         double result = applyFunction(token, argument);
+
                         replaceTokenWithResult(tokens, i, closingIndex, result);
+
+                        i = i - (closingIndex - openingIndex);
+                        functionFound = true;
                         break;
                     } else {
                         throw new IllegalArgumentException("Invalid syntax for function: " + token);

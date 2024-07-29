@@ -1,13 +1,17 @@
 package PagMath;
 
+import PagMath.AST.ASTNode;
+import PagMath.AST.Parser;
+import PagMath.AST.Tokenizer;
 import PagMath.Operations.ComplexOperations;
-import PagMath.Operations.PowerTo;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static PagMath.Operations.AdditiveOperations.handleAdditiveOperations;
+import static PagMath.Operations.ComplexOperations.isFunction;
 import static PagMath.Operations.PowerTo.handlePowerOperations;
+import static java.lang.StringTemplate.STR;
 
 public class Calculation {
     public static void main(String[] args) {
@@ -21,28 +25,62 @@ public class Calculation {
         calc(test7);
     }
 
+    public static void calc(String expression) {
+        List<String> tokens = getCalculationAsList(expression);
+        handleMissingOperationSymbols(tokens);
+
+        if(!isValidTerm(tokens)) return;
+        //ConvertComplexOperations
+        List<String> functionName = tokens.stream().filter(ComplexOperations::isFunction).toList();
+        if (!functionName.isEmpty()) {
+            ComplexOperations.handleCommonUsedFunctions(tokens);
+            ComplexOperations.handleFunctions(tokens);
+            System.out.println("Complex Operation "+ functionName.get(0) + ": " + tokens);
+        }
+
+        List<String> result = processTokens(tokens);
+        System.out.println("Result: " +expression + " "+ result.get(0));
+    }
+
     public static List<String> generalCalc(List<String> input) {
         List<String> result = new ArrayList<>(input);
 
-        //ConvertsFirstNumber to one
-        handelStartingMinus(result);
-        System.out.println("Starting Minus:" + result);
+        // Converts the first number to one if it starts with a minus sign
+        if (result.get(0).equals("-")) {
+            handelStartingMinus(result);
+            System.out.println("Starting Minus:" + result);
+        }
 
-        // First, handle power (^) operations
-        handlePowerOperations(result);
-        System.out.println("Power:" + result);
+        boolean containsPower = result.contains("^");
+        boolean containsMultiplicative = result.contains("*") || result.contains("/") || result.contains("%");
+        boolean containsAdditive = result.contains("+") || result.contains("-");
 
-        // Then, handle *, /, and % operations
-        handleMultiplicativeOperations(result);
-        System.out.println("Multiplicative:" + result);
+        // First, handle power (^) operations if present
+        if (containsPower) {
+            handlePowerOperations(result);
+            System.out.println("Power:" + result);
+        }
 
-        // Finally, handle + and - operations
-        handleAdditiveOperations(result);
-        System.out.println("Additive:" + result);
+        // Then, handle *, /, and % operations if present
+        if (containsMultiplicative) {
+            handleMultiplicativeOperations(result);
+            System.out.println("Multiplicative:" + result);
+        }
+
+        // Finally, handle + and - operations if present
+        if (containsAdditive) {
+            handleAdditiveOperations(result);
+            System.out.println("Additive:" + result);
+        }
 
         return result;
     }
 
+    public static double evaluate(String expression) {
+        List<String> tokens = Tokenizer.getCalculationAsList(expression);
+        ASTNode ast = Parser.parse(tokens);
+        return ast.evaluate();
+    }
 
     public static void handleMultiplicativeOperations(List<String> result) {
         for (int i = 0; i < result.size(); i++) {
@@ -154,6 +192,10 @@ public class Calculation {
         return input == '+' || input == '-' || input == '*' || input == '/' || input == '%' || input == '^';
     }
 
+    public static boolean isSimpleSymbol(char input) {
+        return input == '+' || input == '-';
+    }
+
     public static boolean isSpace(char input) {
         return input == ' ';
     }
@@ -231,22 +273,6 @@ public class Calculation {
         return token.equals(")") || token.equals("]") || token.equals("}");
     }
 
-    public static void calc(String expression) {
-        List<String> tokens = getCalculationAsList(expression);
-        handleMissingOperationSymbols(tokens);
-
-        //ConvertComplexOperations
-        List<String> functionName = tokens.stream().filter(ComplexOperations::isFunction).toList();
-        if (!functionName.isEmpty()) {
-            ComplexOperations.handleCommonUsedFunctions(tokens);
-            ComplexOperations.handleFunctions(tokens);
-            System.out.println("Complex Operation "+ functionName.get(0) + ": " + tokens);
-        }
-
-        List<String> result = processTokens(tokens);
-        System.out.println("Result: " +expression + " "+ result.get(0));
-    }
-
     public static boolean isNumber(String token){
         if(token == null || token.isEmpty()){
             return false;
@@ -269,4 +295,72 @@ public class Calculation {
         }
         return -1;
     }
+
+    public static boolean isValidTerm(List<String> tokens) {
+        int bracketCount = 0;
+        boolean lastWasOperator = false;
+
+        for (int i = 0; i < tokens.size(); i++) {
+            String token = tokens.get(i);
+
+            if (!isNumber(token) && !isSimpleSymbol(token.charAt(0)) && !isFunction(token)
+                    && !isOpeningBracket(token) && !isClosingBracket(token) && !isMathSymbole(token.charAt(0))) {
+                System.out.println("Invalid token: " + token);
+                return false;
+            }
+
+            if (isOpeningBracket(token)) {
+                bracketCount++;
+            } else if (isClosingBracket(token)) {
+                bracketCount--;
+            }
+
+            if (isMathSymbole(token.charAt(0)) || isSimpleSymbol(token.charAt(0))) {
+                if (lastWasOperator && isSimpleSymbol(token.charAt(0))) {
+                    System.out.println("Misplaced operators found: " + tokens.get(i - 1) + " " + token);
+                    return false;
+                }
+                lastWasOperator = true;
+            } else {
+                lastWasOperator = false;
+            }
+
+            if (i > 0) {
+                String prevToken = tokens.get(i - 1);
+                if (isMathSymbole(prevToken.charAt(0)) && isMathSymbole(token.charAt(0))) {
+                    if (!(prevToken.equals("-") && isNumber(token))) {
+                        System.out.println("Misplaced operators found: " + prevToken + " " + token);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (bracketCount != 0) {
+            System.out.println("Unmatched parentheses found.");
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean isValidOperatorSequence(String prevToken, String currentToken) {
+        // Handle the case of unary minus (e.g., 2^-3, -2)
+        if (currentToken.equals("-") && (prevToken.equals("^") || prevToken.equals("*") ||
+                prevToken.equals("/") || prevToken.equals("%") ||
+                prevToken.equals("+") || prevToken.equals("-"))) {
+            return true;
+        }
+
+        // Handle the case of double operators which are not allowed (e.g., ++, **, etc.)
+        if (isMathSymbole(prevToken.charAt(0)) && isMathSymbole(currentToken.charAt(0))) {
+            System.out.println(STR."""
+                    Invalid operator sequence: \{prevToken} \{currentToken}
+                    """);
+            return false;
+        }
+
+        return true;
+    }
+
 }

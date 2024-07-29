@@ -1,4 +1,4 @@
-package PagMath;
+package PagMath.Test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -29,6 +29,7 @@ public class Test {
                 "2^(sqrt(4))","1 + 2 * 3 - 4 / 2","-(sqrt(4))^2","5 % 2 + 3","sin(30)^2 + cos(30)^2"
         };
         String[] test2 = {
+                /*
                 // Grundlegende Operationen
                 "2^2",  //correct   4
                 "-3*2", //correct   -6
@@ -56,12 +57,14 @@ public class Test {
                 "2+3^2*2",  //correct   20
 
                 // Logarithmen und trigonometrische Funktionen
-                "log(100) + 1", //TODO: 5.6
-                "log10(100) + 1", //TODO:   log10                  Annahme, dass log10 unterstützt wird
-                "ln(100) + 1",    //TODO:   ln                     Annahme, dass ln als natürlicher Logarithmus unterstützt wird
+                "log(100) + 1", //correct 3
+                "log10(100) + 1", //correct 3                 Annahme, dass log10 unterstützt wird
+                "ln(100) + 1",    //5.605170185988092                     Annahme, dass ln als natürlicher Logarithmus unterstützt wird
                 "cos(0) + sin(90)", //correct 2
                 "sin(30)^2 + cos(30)^2", //correct 1
 
+
+                 */
                 // Verschachtelte Wurzeln und trigonometrische Funktionen
                 "sqrt(sqrt(16))", //TODO: "sqrt"
                 "sin(cos(45))", //TODO: "cos"
@@ -104,7 +107,7 @@ public class Test {
                 "log(sqrt(100))", "cos(sin(0)) + 1", "2^3^2", "sqrt(2^2 + 2^2)", "log(abs(-10))"
         };
 
-        iterate(test3);
+        iterate(test2);
     }
 
     public static void testPowerSimple(){
